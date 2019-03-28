@@ -461,9 +461,10 @@ var PwController = function () {
     });
 
     $(document).on('click', '.confirm-delete', function() {
-        $('#from_delete_id').val($(this).attr('delete_id'));
-        var title = $(this).attr('title');
-        if (title) $('#from-delete-title').html(title);
+        var delete_id = PwNode.byElement(this).attr('delete_id');
+        if (!delete_id) return;
+        PwNode.id('from_delete_id').setValue(delete_id);
+        if (title = PwNode.byElement(this).attr('title')) PwNode.id('from-delete-title').html(title);
         $('.delete-window').modal();
     });
 

@@ -48,14 +48,11 @@ var PwNode = /** @class */ (function () {
         this.check = function() {
             if (this.element) return this.element.checked;
         }
-        this.checks = function () {
+        this.checked = function () {
             if (this.node_list) {
                 var selected = null;
                 this.node_list.forEach(function (element) {
-                    if (element.checked) {
-                        selected = element.value;
-                        return;
-                    }
+                    if (element.checked) return selected = element.value;
                 });
             }
             return selected;
