@@ -17,23 +17,75 @@ var PwNode = /** @class */ (function () {
             }
             if (this.params.class_name) {
                 this.setClassName(this.params.class_name);
+                //TODO node_list type
                 this.node_list = document.getElementsByClassName(this.params.class_name);
+                this.html_collection = document.getElementsByClassName(this.params.class_name);
+                //this.elements = Array.from(this.html_collection);
+                this.elements = [].slice.call(this.html_collection);
+            }
+            if (this.params.query) {
+                this.elements = document.querySelectorAll(this.params.query);
             }
             return this;
         };
-        this.setValue = function (value) {
-            if (this.element) {
-                this.element.value = value;
-                return this;
+        this.parent = function() {
+            if (this.element && this.element.parentNode) {
+                return PwNode.byElement(this.element.parentNode);
             }
-        };
+        }
+        this.remove = function() {
+            if (this.element) this.element.remove();
+            if (this.elements) {
+                [].forEach.call(this.elements, function(element) {
+                    element.parentNode.removeChild(element);
+                });
+            }
+        }
+        this.submit = function () {
+            if (this.element) return this.element.submit();
+        }
         this.val = function () {
             if (this.element) return this.element.value;
         };
         this.value = function () {
             if (this.element) return this.element.value;
         };
-        this.name = function (name) {
+        this.getID = function () {
+            if (this.element) return this.element.id;
+        };
+        this.setValue = function (value) {
+            if (this.element) {
+                this.element.value = value;
+            } else if (this.node_list) {
+                this.setValues(value);
+            } else if (this.elements) {
+                this.setValues(value);
+            }
+            return this;
+        };
+        this.setValues = function (value) {
+            var elements;
+            if (this.node_list) {
+                elements = this.node_list;
+            } else if (this.elements) {
+                elements = this.elements;
+            }
+            if (this.node_list) [].forEach.call(elements, function(element) { setValue(element, value) });
+        }
+        function setValue(element, value) {
+            element.value = value;
+        }
+        this.first = function() {
+            if (this.elements) return this.elements[0];
+        }
+        this.last = function() {
+            if (this.elements) {
+                var index = this.length - 1;
+                if (index <= 0) index = 0
+                return this.elements[index];
+            }
+        }
+        this.name = function () {
             if (this.name) return this.element.name;
         };
         this.setName = function (name) {
@@ -45,49 +97,46 @@ var PwNode = /** @class */ (function () {
         this.selected = function () {
             if (this.element) return this.element.value;
         }
-        this.check = function() {
-            if (this.element) return this.element.checked;
+        this.check = function(is_checked) {
+            if (is_checked) {
+                this.element.checked = 1;
+            } else {
+                this.element.checked = null;
+            }
         }
         this.checked = function () {
+            var elements;
             if (this.node_list) {
-                var selected = null;
-                this.node_list.forEach(function (element) {
-                    if (element.checked) return selected = element.value;
-                });
+                elements = this.node_list;
+            } else if (this.elements) {
+                elements = this.elements;
             }
-            return selected;
+            if (elements) {
+                var checked = null;
+                [].forEach.call(elements, function (element) { if (element.checked) return checked = element.value; });
+                return checked;
+            } else if (this.element) {
+                return this.element.checked;
+            }
+        }
+        this.toggleCheckAll = function(is_checked) {
+            if (is_checked) {
+                this.checkAll();
+            } else {
+                this.uncheckAll();
+            }
         }
         this.checkAll = function () {
-            if (this.node_list) {
-                this.node_list.forEach(function (element) {
-                    element.checked = 1;
-                });
-            }
-        }
-        this.checkValues = function () {
-            var values = new Array();
-            if (this.node_list) {
-                this.node_list.forEach(function (element) {
-                    if (element.checked) {
-                        values.push(element.value);
-                        return;
-                    }
-                });
-            }
-            return values;
+            var elements = null;
+            if (this.node_list) elements = this.node_list;
+            if (this.elements) elements = this.elements;
+            if (elements) elements.forEach(function (element) { element.checked = 1; });
         }
         this.uncheckAll = function () {
-            if (this.node_list) {
-                this.node_list.forEach(function (element) {
-                    element.checked = null;
-                });
-            }
-        }
-        this.selectValue = function (value) {
-            if (this.element) {
-                this.element.value = value;
-                return this;
-            }
+            var elements = null;
+            if (this.node_list) elements = this.node_list;
+            if (this.elements) elements = this.elements;
+            if (elements) elements.forEach(function (element) { element.checked = null; });
         }
         this.checkValue = function (value) {
             if (this.element) {
@@ -99,8 +148,29 @@ var PwNode = /** @class */ (function () {
                 return this;
             }
         }
+        this.checkValues = function () {
+            var values = new Array();
+            if (this.node_list) {
+                [].forEach.call(this.node_list, function (element) {
+                    if (element.checked) {
+                        values.push(element.value);
+                        return;
+                    }
+                });
+            }
+            return values;
+        }
+        this.selectValue = function (value) {
+            if (this.element) {
+                this.element.value = value;
+                return this;
+            }
+        }
         this.setAttr = function (key, value) {
             if (this.element) {
+                //TODO remove local node?
+                var node = PwNode.byElement(this.element);
+                node.element.setAttribute(key, value);
                 this.element.setAttribute(key, value);
                 return this;
             }
@@ -112,19 +182,25 @@ var PwNode = /** @class */ (function () {
                 Object.keys(params).map(function (key) { this.element.setAttribute(key, params[key]); });
         };
         this.attr = function (selector) {
-            if (!selector)
-                return;
-            if (this.element)
-                return this.element.getAttribute(selector);
+            if (!selector) return;
+            if (this.element) return this.element.getAttribute(selector);
         };
         this.html = function (html) {
             if (this.element) return this.element.innerHTML = html;
+            if (this.elements) [].forEach.call(this.elements, function(element) { element.innerHTML = html });
         };
         this.css = function (column) {
             if (this.element) return this.element.style[column];
         }
         this.setCss = function (column, value) {
-            if (this.element) this.element.style[column] = value;
+            if (this.element) setCss(this.element, column, value);
+            if (this.elements) [].forEach.call(this.elements, function(element) { setCss(element, column, value) });
+        }
+        function setCss(element, column, value) {
+            element.style[column] = value
+        }
+        this.length = function () {
+            if (this.elements) return this.elements.length;
         }
         this.offset = function () {
             var rect = this.element.getBoundingClientRect();
@@ -153,28 +229,35 @@ var PwNode = /** @class */ (function () {
             }
         };
         this.show = function () {
-            if (this.element) this.element.style.display = '';
+            if (this.element) setDisplay(this.element, '');
+            if (this.elements) [].forEach.call(this.elements, function(element) { setDisplay(element, '') });
         }
         this.hide = function () {
-            if (this.element) this.element.style.display = 'none';
+            if (this.element) setDisplay(this.element, 'none');
+            if (this.elements) [].forEach.call(this.elements, function(element) { setDisplay(element, 'none') });
+        }
+        function setDisplay(element, value) {
+            element.style.display = value
         }
         this.disabled = function () {
-            if (this.element) this.element.disabled = true;
+            if (this.element) setDisabled(this.element.disabled, true);
+            if (this.elements) [].forEach.call(this.elements, function(element) { setDisabled(element.disabled, true) });
         }
         this.abled = function () {
-            if (this.element) this.element.disabled = false;
+            if (this.element) setDisabled(this.element.disabled, false);
+            if (this.elements) [].forEach.call(this.elements, function(element) { setDisabled(element.disabled, false) });
+        }
+        function setDisabled(element, value) {
+            element.style.display = value
         }
         this.controller = function () {
-            if (this.element)
-                return this.attr('pw-controller');
+            if (this.element) return this.attr('pw-controller');
         };
         this.functionName = function () {
-            if (this.element)
-                return this.attr('pw-function');
+            if (this.element) return this.attr('pw-function');
         };
         this.action = function () {
-            if (this.element)
-                return this.attr('pw-action');
+            if (this.element) return this.attr('pw-action');
         };
         this.fadeOut = function () {
             this.element.classList.add('fadeout');
@@ -195,6 +278,22 @@ var PwNode = /** @class */ (function () {
         }
         this.addClass = function(class_name) {
             this.element.classList.add(class_name);
+            if (this.elements) [].forEach.call(this.elements, function(element) {
+                element.classList.add(class_name);
+            });
+        }
+        this.removeClass = function(class_name) {
+            this.element.classList.remove(class_name);
+            if (this.elements) [].forEach.call(this.elements, function(element) {
+                element.classList.remove(class_name);
+            });
+        }
+        this.urlQuery = function(params) {
+            if (!params) return;
+            var queryArray = [];
+            Object.keys(params).forEach(function (key) { return queryArray.push(key + '=' + encodeURIComponent(params[key])); });
+            var query = queryArray.join('&');
+            return query;
         }
 
         /**
@@ -203,16 +302,13 @@ var PwNode = /** @class */ (function () {
          * @return string
          */
         this.controllerClassName = function () {
-            if (!this.element)
-                return;
+            if (!this.element) return;
             var controller_name = this.controller();
-            if (!controller_name)
-                return;
+            if (!controller_name) return;
             var class_name = '';
             var names = controller_name.split('_');
-            if (!names)
-                return;
-            names.forEach(function (name) {
+            if (!names) return;
+            [].forEach.call(names, function (name) {
                 class_name += PwNode.upperTopString(name);
             });
             class_name += 'Controller';
@@ -246,6 +342,11 @@ var PwNode = /** @class */ (function () {
         instance.init();
         return instance;
     };
+    PwNode.byQuery = function (query) {
+        var instance = new PwNode({query: query});
+        instance.init();
+        return instance;
+    }
 
     /**
     * upper string for top

@@ -8,9 +8,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 var PwDate = function() {
-    this.from_at_selector = '#from-at';
-    this.to_at_selector = '#to-at';
+    this.from_selector = 'from-at';
+    this.to_selector = 'to-at';
 
+    this.setFromSelector = function(from_selector) {
+        this.from_selector = from_selector;
+    }
+    this.setToAtSelector = function(to_selector) {
+        this.to_selector = to_selector;
+    }
     this.unixToString = function(time) {
         var date = new Date(time);
         var year  = date.getFullYear();
@@ -117,12 +123,10 @@ var PwDate = function() {
     }
     this.updateFromToComponent = function(value) {
         if (value.from_at) {
-            var from_at = this.string(value.from_at);
-            $(this.from_at_selector).val(from_at);
+            PwNode.id(this.from_selector).setValue(this.string(value.from_at));
         }
         if (value.to_at) {
-            var to_at = this.string(value.to_at);
-            $(this.to_at_selector).val(to_at);
+            PwNode.id(this.to_selector).setValue(this.string(value.to_at));
         }
     }
     this.convertGraphDate = function(value) {
