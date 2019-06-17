@@ -1,5 +1,8 @@
 /**
  * PwSortable
+    ppw_sortable.options = { is_font_awesome: false };
+    pw_sortable.options = { is_font_awesome: false };
+    pw_sortable.options = { is_font_awesome: false };
  * 
  * ver 0.0.1
  * required PwNode.js
@@ -8,11 +11,18 @@
  * Copyright (c) 2018 Yohei Yoshikawa (https://github.com/yoo16/)
  */
 
-var PwSortable = function(options) {
+function PwSortable(options) {
+    var _this = this;
     const pw_row_id_column = 'pw_sortable_';
 
+    this.that = this;
     this.options = options;
+    this.url = '';
     this.is_show_sortable = false;
+    this.is_show_up = false;
+    this.is_show_down = false;
+    this.is_show_top = true;
+    this.is_show_bottom = true;
     this.table_id = 'sortable-table';
     this.row_id_column = 'row-id';
     this.api_uri = '';
@@ -29,32 +39,34 @@ var PwSortable = function(options) {
     this.drag_item;
     this.target_item;
     this.drag_element;
-    this.drag_label = '=';
-    this.up_label = '[Top]';
+    this.drag_label = '[Drag]';
+    this.top_label = '[Top]';
     this.bottom_label = '[Bottom]';
+    this.up_label = '[Up]';
+    this.down_label = '[Down]';
     this.is_add_events = false;
 
-    this.init = function(node) {
-        this.bindOptions();
-        this.loadTableId(node);
-        this.addDragEvents();
-        this.enableDrag();
-        pw_sortable.is_show_sortable = true;
-        pw_sortable.before_rows = [];
-    }
     this.bindOptions = function() {
-        if (!pw_sortable.options) return;
-        Object.keys(pw_sortable.options).forEach(function(key) {
-            pw_sortable[key] = this[key];
-        }, pw_sortable.options);
+        if (!_this.options) return;
+        Object.keys(_this.options).forEach(function(key) {
+            _this[key] = this[key];
+        }, _this.options);
+    }
+    this.init = function() {
+        _this.bindOptions();
+        _this.loadTableId();
+        _this.addDragEvents();
+        _this.enableDrag();
+        _this.is_show_sortable = true;
+        _this.before_rows = [];
     }
     this.addDragEvents = function() {
-        //TODO
-        if (pw_sortable.is_add_events == true) return;
-        pw_sortable.is_add_events = true;
+        //avoid duplicate event registration
+        if (_this.is_add_events == true) return;
+        _this.is_add_events = true;
         function handleDragStart(event) {
             let tr = event.target.closest('tr');
-            if (tr) pw_sortable.drag_item = event.target.closest('tr');
+            if (tr) _this.drag_item = event.target.closest('tr');
             event.target.style.opacity = '0.4';
             event.stopPropagation();
         }
@@ -69,23 +81,23 @@ var PwSortable = function(options) {
         }
         function handleDragLeave(event) {
             var tr = event.target.closest('tr');
-            if (tr && pw_sortable.drag_item != tr) {
-                pw_sortable.target_item = tr;
+            if (tr && _this.drag_item != tr) {
+                _this.target_item = tr;
             }
         }
         function handleDrop(event) {
             event.target.style.opacity = '1.0'
-            let row_id = pw_sortable.drag_item.getAttribute(pw_sortable.row_id_column);
-            if (row_id && pw_sortable.target_item && pw_sortable.drag_item != pw_sortable.target_item) {
-                var tbody = PwNode.byQuery(pw_sortable.body_selector).first();
-                let drag_order = pw_sortable.drag_item.getAttribute('order');
-                let target_order = pw_sortable.target_item.getAttribute('order');
+            let row_id = _this.drag_item.getAttribute(_this.row_id_column);
+            if (row_id && _this.target_item && _this.drag_item != _this.target_item) {
+                var tbody = PwNode.byQuery(_this.body_selector).first();
+                let drag_order = _this.drag_item.getAttribute('order');
+                let target_order = _this.target_item.getAttribute('order');
                 if (drag_order > target_order) {
-                    tbody.insertBefore(pw_sortable.drag_item, pw_sortable.target_item);
+                    tbody.insertBefore(_this.drag_item, _this.target_item);
                 } else if (drag_order < target_order) {
-                    tbody.insertBefore(pw_sortable.drag_item, pw_sortable.target_item.nextElementSibling);
+                    tbody.insertBefore(_this.drag_item, _this.target_item.nextElementSibling);
                 }
-                pw_sortable.reloadRowIds();
+                _this.reloadRowIds();
             }
             event.preventDefault();
             event.stopPropagation();
@@ -105,9 +117,9 @@ var PwSortable = function(options) {
         if (!this.table_id) return;
         var row_id;
         [].forEach.call(this.getElements(), function(element, index) {
-            pw_sortable.before_rows.push(element);
+            _this.before_rows.push(element);
             row_node = PwNode.byElement(element);
-            if (row_id = row_node.attr(pw_sortable.row_id_column)) {
+            if (row_id = row_node.attr(_this.row_id_column)) {
                 row_node.setAttr('id', pw_row_id_column + row_id);
                 row_node.setAttr('order', index + 1);
                 row_node.setAttr('draggable', true);
@@ -115,109 +127,168 @@ var PwSortable = function(options) {
             }
         });
     }
-    this.loadTableId = function(node) {
-        if (node && node.attr('pw_sortable_table_id')) {
-            pw_sortable.table_id = node.attr('pw_sortable_table_id');
-        } else if (pw_sortable.options && pw_sortable.options.hasOwnProperty('table_id')) {
-            pw_sortable.table_id = pw_sortable.options.table_id;
-        }
-        pw_sortable.body_selector = '#' + pw_sortable.table_id + ' tbody';
-        pw_sortable.tr_selector = '#' + pw_sortable.table_id + ' tr';
-        pw_sortable.sortable_tr_selector = pw_sortable.body_selector + ' tr';
+    this.loadTableId = function() {
+        _this.body_selector = '#' + _this.table_id + ' tbody';
+        _this.tr_selector = '#' + _this.table_id + ' tr';
+        _this.sortable_tr_selector = _this.body_selector + ' tr';
     }
     this.getElements = function() {
-        let elements = PwNode.byQuery(pw_sortable.sortable_tr_selector).elements;
+        let elements = PwNode.byQuery(_this.sortable_tr_selector).elements;
         return elements;
     }
     this.reloadRowIds = function() {
-        pw_sortable.sort_orders = [];
+        _this.sort_orders = [];
         var order = 0;
         [].forEach.call(this.getElements(), function(element) {
             order++;
             element.setAttribute('order', order);
-            let row_id = element.getAttribute(pw_sortable.row_id_column);
+            let row_id = element.getAttribute(_this.row_id_column);
             if (row_id) {
-                pw_sortable.sort_orders.push({id: row_id, order: order});
+                _this.sort_orders.push({id: row_id, order: order});
             }
         });
     }
     this.getOrders = function() {
-        return pw_sortable.sort_orders;
+        return _this.sort_orders;
     }
     this.set = function(params) {
         if (params) {
-            if (params.hasOwnProperty('table_id')) pw_sortable.table_id = params.table_id;
-            if (params.hasOwnProperty('api_uri')) pw_sortable.api_uri = params.api_uri;
-            if (params.hasOwnProperty('callback')) pw_sortable.callback = params.callback;
-            if (params.hasOwnProperty('is_use_loading')) pw_sortable.is_use_loading = params.is_use_loading;
+            if (params.hasOwnProperty('table_id')) _this.table_id = params.table_id;
+            if (params.hasOwnProperty('api_uri')) _this.api_uri = params.api_uri;
+            if (params.hasOwnProperty('callback')) _this.callback = params.callback;
+            if (params.hasOwnProperty('is_use_loading')) _this.is_use_loading = params.is_use_loading;
         }
     }
-    this.reset = function(node) {
-        pw_sortable.close(node);
+    this.reset = function() {
+        _this.close();
     }
-    this.edit = function(node) {
-        if (pw_sortable.is_show_sortable) return;
-        this.init(node);
+    this.setOptions = function(options) {
+        _this.options = options;
+    }
+    this.edit = function() {
+        if (_this.is_show_sortable) return;
+        _this.init();
         PwNode.byClass('pw-sortable-control').show();
-        pw_sortable.showControl(node);
+        _this.showControl();
     }
-    this.update_sort = function(node) {
-        if (!pw_sortable.sort_orders) return;
-        pw_app.postJson( { controller: node.controller(), action: node.action() },
-            JSON.stringify(this.getOrders()),
-            {callback: callback, is_show_loading: true}
-        );
+    this.update_sort = function() {
+        if (!_this.sort_orders) return;
+        let json = JSON.stringify(_this.getOrders());
+        let controller = this.getAttribute('pw-controller');
+        let action = this.getAttribute('pw-action');
+
+        if (typeof pw_app === "undefined") {
+            if (_this.url) {
+                _this.postJson(url, json, options);
+            } else {
+                window.alert('Not found url');
+            }
+        } else {
+            //use PwApp
+            pw_app.postJson( { controller: controller, action: action },
+                json, {callback: callback, is_show_loading: true}
+            );
+        }
         function callback(data) {
-            pw_sortable.before_rows = [];
-            pw_sortable.is_show_sortable = false;
-            pw_sortable.close(node);
-            if (pw_sortable.callback) pw_sortable.callback(data);
+            _this.before_rows = [];
+            _this.is_show_sortable = false;
+            _this.close();
+            if (_this.callback) _this.callback(data);
         }
     }
-    this.close = function(node) {
-        pw_sortable.is_show_sortable = false;
+    //not use PwApp
+    this.postJson = function (url, json, options) {
+        function headerPostJson (json) {
+            var header = { 
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                credentials: 'include',
+                body: json,
+                mode: 'cors',
+                cache: 'default',
+            };
+            return header;
+        }
+        function fetchRequest(url, header_options, options) {
+            var callback = options.callback;
+            var error_callback = options.error_callback;
+            fetch(url, header_options).catch(function(err) {
+                throw new Error('post error')
+            }).then(function(response) {
+                //const promise = response.text();
+                if (response.ok) {
+                    return response.text().then(function(text) {
+                        return text;
+                    });
+                } else {
+                    if (error_callback) error_callback(response);
+                }
+            }).then(function(text) {
+                if (callback) callback(text);
+            }); 
+        }
+        fetchRequest(url, headerPostJson(json), options);
+    }
+    this.close = function() {
+        _this.is_show_sortable = false;
         PwNode.byClass('pw-sortable-control').hide();
         PwNode.byClass('sortable-control').remove();
         this.cursorChange('default');
 
         [].forEach.call(this.getElements(), function(element, index) {
             row_node = PwNode.byElement(element);
-            if (row_node.attr(pw_sortable.row_id_column)) { row_node.setAttr('draggable', false); }
+            if (row_node.attr(_this.row_id_column)) { row_node.setAttr('draggable', false); }
         });
     }
     this.cursorChange = function(value) {
-        var tbody = PwNode.byQuery(pw_sortable.body_selector).first();
+        var tbody = PwNode.byQuery(_this.body_selector).first();
         tbody.style.cursor = value;
     }
     this.showControl = function(node) {
         PwNode.byClass('sortable-control').show();
         if (this.is_use_row_control) this.addRowControl();
     }
-    this.top = function(node) {
-        var tbody = PwNode.byQuery(pw_sortable.body_selector).first();
-        var top_tr = PwNode.byQuery(pw_sortable.sortable_tr_selector).first()
-        var tr = node.element.closest('tr');
+    this.top = function(event) {
+        var tbody = PwNode.byQuery(_this.body_selector).first();
+        let top_tr = PwNode.byQuery(_this.sortable_tr_selector).first()
+        let tr = this.closest('tr');
         tbody.insertBefore(tr, top_tr);
-
-        pw_sortable.reloadRowIds();
+        _this.reloadRowIds();
     }
-    this.bottom = function(node) {
-        var tbody = PwNode.byQuery(pw_sortable.body_selector).first();
-        var last_tr = PwNode.byQuery(pw_sortable.sortable_tr_selector).last()
-        var tr = node.element.closest('tr');
+    this.up = function(event) {
+        var tbody = PwNode.byQuery(_this.body_selector).first();
+        let tr = this.closest('tr');
+        let prev_tr = tr.previousElementSibling;
+        if (prev_tr) {
+            tbody.insertBefore(tr, prev_tr);
+            _this.reloadRowIds();
+        }
+    }
+    this.down = function(event) {
+        var tbody = PwNode.byQuery(_this.body_selector).first();
+        let tr = this.closest('tr');
+        let next_tr = tr.nextElementSibling;
+        if (next_tr) {
+            tbody.insertBefore(next_tr, tr);
+            _this.reloadRowIds();
+        }
+    }
+    this.bottom = function(event) {
+        var tbody = PwNode.byQuery(_this.body_selector).first();
+        let last_tr = PwNode.byQuery(_this.sortable_tr_selector).last()
+        let tr = this.closest('tr');
         tbody.insertBefore(tr, last_tr);
-
-        pw_sortable.reloadRowIds();
+        _this.reloadRowIds();
     }
     this.addRowControl = function() {
-        var header_tr_element = PwNode.byQuery(pw_sortable.tr_selector).first();
+        var header_tr_element = PwNode.byQuery(_this.tr_selector).first();
         var sortable_control_header_element = document.createElement('th')
         sortable_control_header_element.classList.add('sortable-control');
         header_tr_element.insertBefore(sortable_control_header_element, header_tr_element.children[0]);
 
         [].forEach.call(this.getElements(), function(element, index) {
             let tr = PwNode.byElement(element);
-            if (row_id = tr.attr(pw_sortable.row_id_column)) {
+            if (row_id = tr.attr(_this.row_id_column)) {
                 var sortable_control_element = document.createElement('td');
                 sortable_control_element.classList.add('sortable-control');
                 sortable_control_element.setAttribute('row_id', row_id);
@@ -227,20 +298,83 @@ var PwSortable = function(options) {
         });
 
         var link_tag = '';
+        link_tag = '';
         var drag_label = this.drag_label;
-        var up_label = this.up_label;
+        var top_label = this.top_label;
         var bottom_label = this.bottom_label;
+        var up_label = this.up_label;
+        var down_label = this.down_label;
         if (this.is_font_awesome) {
             drag_label = '<i class="fa fa-align-justify"></i>';
-            up_label = '<i class="fa fa-angle-double-up"></i>';
+            top_label = '<i class="fa fa-angle-double-up"></i>';
             bottom_label = '<i class="fa fa-angle-double-down"></i>';
-        }
-        link_tag+= '<a>' + drag_label +'</a>';
-        link_tag+= '<a class="btn btn-sm pw-click" pw-lib="PwSortable" pw-action="top">' + up_label + '</a>';
-        link_tag+= '<a class="bottom btn btn-sm pw-click" pw-lib="PwSortable" pw-action="bottom">' + bottom_label + '</a>';
+            up_label = '<i class="fa fa-angle-up"></i>';
+            down_label = '<i class="fa fa-angle-down"></i>';
+        } 
+        var drag_element = document.createElement('a');
+        drag_element.innerHTML = drag_label;
+
+        var top_element = document.createElement('a');
+        top_element.classList.add('btn');
+        top_element.classList.add('btn-sm');
+        top_element.classList.add('pw_sortable_event');
+        top_element.setAttribute('event', 'click');
+        top_element.setAttribute('action', 'top');
+        top_element.innerHTML = top_label;
+
+        var bottom_element = document.createElement('a');
+        bottom_element.classList.add('btn');
+        bottom_element.classList.add('btn-sm');
+        bottom_element.classList.add('pw_sortable_event');
+        bottom_element.setAttribute('event', 'click');
+        bottom_element.setAttribute('action', 'bottom');
+        bottom_element.innerHTML = bottom_label;
+
+        var up_element = document.createElement('a');
+        up_element.classList.add('btn');
+        up_element.classList.add('btn-sm');
+        up_element.classList.add('pw_sortable_event');
+        up_element.setAttribute('event', 'click');
+        up_element.setAttribute('action', 'up');
+        up_element.innerHTML = up_label;
+
+        var down_element = document.createElement('a');
+        down_element.classList.add('btn');
+        down_element.classList.add('btn-sm');
+        down_element.classList.add('pw_sortable_event');
+        down_element.setAttribute('event', 'click');
+        down_element.setAttribute('action', 'down');
+        down_element.innerHTML = down_label;
+
+        link_tag+= drag_element.outerHTML;
+        if (_this.is_show_top) link_tag+= top_element.outerHTML;
+        if (_this.is_show_bottom) link_tag+= bottom_element.outerHTML;
+        if (_this.is_show_up) link_tag+= up_element.outerHTML;
+        if (_this.is_show_down) link_tag+= down_element.outerHTML;
+
+        //TODO add element?
         PwNode.byQuery('td.sortable-control').html(link_tag);
+
+        let elements = document.getElementsByClassName('pw_sortable_event');
+        if (elements) {
+            [].forEach.call(elements, function(element) {
+                let event = element.getAttribute('event');
+                let action = element.getAttribute('action');
+                if (event == 'click' && action) { element.addEventListener('click', _this[action], false); }
+            });
+        }
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        let elements = document.getElementsByClassName('pw_sortable');
+        if (elements) {
+            [].forEach.call(elements, function(element) {
+                let event = element.getAttribute('event');
+                let action = element.getAttribute('action');
+                if (event && action) { element.addEventListener(event, _this[action], false); }
+            });
+        }
+    });
+    return this;
 }
 var pw_sortable = new PwSortable();
-document.addEventListener('DOMContentLoaded', function() {
-});
