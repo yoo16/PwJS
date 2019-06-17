@@ -1,8 +1,5 @@
 /**
  * PwSortable
-    ppw_sortable.options = { is_font_awesome: false };
-    pw_sortable.options = { is_font_awesome: false };
-    pw_sortable.options = { is_font_awesome: false };
  * 
  * ver 0.0.1
  * required PwNode.js
