@@ -1,34 +1,37 @@
 /**
- * PwSortable
+ * PwTableDND
  * 
- * ver 0.0.1
+ * ver 0.0.2
  * required PwNode.js
  * 
  * @author  Yohei Yoshikawa
  * Copyright (c) 2018 Yohei Yoshikawa (https://github.com/yoo16/)
  */
 
-function PwSortable(options) {
+function PwTableDND(options) {
     var _this = this;
-    const pw_row_id_column = 'pw_sortable_';
+    const pw_row_id_column = 'pw_table_dnd_';
 
     this.that = this;
     this.options = options;
     this.url = '';
     this.is_show_sortable = false;
-    this.is_show_up = false;
-    this.is_show_down = false;
+    this.is_show_up = true;
+    this.is_show_down = true;
     this.is_show_top = true;
     this.is_show_bottom = true;
     this.table_id = 'sortable-table';
     this.row_id_column = 'row-id';
+    this.tablednd_menu = 'pw-tablednd-menu';
+    this.tablednd_control = 'pw-tablednd-control';
+    this.tablednd_event = 'pw_table_dnd_event';
     this.api_uri = '';
     this.body_selector = '';
     this.tr_selector = '';
     this.sortable_tr_selector = '';
     this.sort_orders;
     this.model_name = '';
-    this.before_rows = []; //under construction
+    this.before_rows = []; //under construction cache
     this.callback;
     this.is_use_loading = true;
     this.is_font_awesome = true;
@@ -51,7 +54,7 @@ function PwSortable(options) {
     }
     this.init = function() {
         _this.bindOptions();
-        _this.loadTableId();
+        _this.loadSelectorColumn();
         _this.addDragEvents();
         _this.enableDrag();
         _this.is_show_sortable = true;
@@ -77,12 +80,12 @@ function PwSortable(options) {
             return false;
         }
         function handleDragLeave(event) {
+        }
+        function handleDrop(event) {
             var tr = event.target.closest('tr');
             if (tr && _this.drag_item != tr) {
                 _this.target_item = tr;
             }
-        }
-        function handleDrop(event) {
             event.target.style.opacity = '1.0'
             let row_id = _this.drag_item.getAttribute(_this.row_id_column);
             if (row_id && _this.target_item && _this.drag_item != _this.target_item) {
@@ -124,7 +127,7 @@ function PwSortable(options) {
             }
         });
     }
-    this.loadTableId = function() {
+    this.loadSelectorColumn = function() {
         _this.body_selector = '#' + _this.table_id + ' tbody';
         _this.tr_selector = '#' + _this.table_id + ' tr';
         _this.sortable_tr_selector = _this.body_selector + ' tr';
@@ -165,7 +168,7 @@ function PwSortable(options) {
     this.edit = function() {
         if (_this.is_show_sortable) return;
         _this.init();
-        PwNode.byClass('pw-sortable-control').show();
+        PwNode.byClass(_this.tablednd_menu).show();
         _this.showControl();
     }
     this.update_sort = function() {
@@ -176,7 +179,7 @@ function PwSortable(options) {
 
         if (typeof pw_app === "undefined") {
             if (_this.url) {
-                _this.postJson(url, json, options);
+                _this.postJson(_this.url, json, options);
             } else {
                 window.alert('Not found url');
             }
@@ -228,8 +231,8 @@ function PwSortable(options) {
     }
     this.close = function() {
         _this.is_show_sortable = false;
-        PwNode.byClass('pw-sortable-control').hide();
-        PwNode.byClass('sortable-control').remove();
+        PwNode.byClass(_this.tablednd_menu).hide();
+        PwNode.byClass(_this.tablednd_control).remove();
         this.cursorChange('default');
 
         [].forEach.call(this.getElements(), function(element, index) {
@@ -242,7 +245,7 @@ function PwSortable(options) {
         tbody.style.cursor = value;
     }
     this.showControl = function(node) {
-        PwNode.byClass('sortable-control').show();
+        PwNode.byClass(_this.tablednd_control).show();
         if (this.is_use_row_control) this.addRowControl();
     }
     this.top = function(event) {
@@ -280,14 +283,14 @@ function PwSortable(options) {
     this.addRowControl = function() {
         var header_tr_element = PwNode.byQuery(_this.tr_selector).first();
         var sortable_control_header_element = document.createElement('th')
-        sortable_control_header_element.classList.add('sortable-control');
+        sortable_control_header_element.classList.add(_this.tablednd_control);
         header_tr_element.insertBefore(sortable_control_header_element, header_tr_element.children[0]);
 
         [].forEach.call(this.getElements(), function(element, index) {
             let tr = PwNode.byElement(element);
             if (row_id = tr.attr(_this.row_id_column)) {
                 var sortable_control_element = document.createElement('td');
-                sortable_control_element.classList.add('sortable-control');
+                sortable_control_element.classList.add(_this.tablednd_control);
                 sortable_control_element.setAttribute('row_id', row_id);
                 sortable_control_element.setAttribute('nowrap', 'nowrap');
                 element.insertBefore(sortable_control_element, element.children[0]);
@@ -314,7 +317,7 @@ function PwSortable(options) {
         var top_element = document.createElement('a');
         top_element.classList.add('btn');
         top_element.classList.add('btn-sm');
-        top_element.classList.add('pw_sortable_event');
+        top_element.classList.add(_this.tablednd_event);
         top_element.setAttribute('event', 'click');
         top_element.setAttribute('action', 'top');
         top_element.innerHTML = top_label;
@@ -322,7 +325,7 @@ function PwSortable(options) {
         var bottom_element = document.createElement('a');
         bottom_element.classList.add('btn');
         bottom_element.classList.add('btn-sm');
-        bottom_element.classList.add('pw_sortable_event');
+        bottom_element.classList.add(_this.tablednd_event);
         bottom_element.setAttribute('event', 'click');
         bottom_element.setAttribute('action', 'bottom');
         bottom_element.innerHTML = bottom_label;
@@ -330,7 +333,7 @@ function PwSortable(options) {
         var up_element = document.createElement('a');
         up_element.classList.add('btn');
         up_element.classList.add('btn-sm');
-        up_element.classList.add('pw_sortable_event');
+        up_element.classList.add(_this.tablednd_event);
         up_element.setAttribute('event', 'click');
         up_element.setAttribute('action', 'up');
         up_element.innerHTML = up_label;
@@ -338,7 +341,7 @@ function PwSortable(options) {
         var down_element = document.createElement('a');
         down_element.classList.add('btn');
         down_element.classList.add('btn-sm');
-        down_element.classList.add('pw_sortable_event');
+        down_element.classList.add(_this.tablednd_event);
         down_element.setAttribute('event', 'click');
         down_element.setAttribute('action', 'down');
         down_element.innerHTML = down_label;
@@ -350,9 +353,10 @@ function PwSortable(options) {
         if (_this.is_show_down) link_tag+= down_element.outerHTML;
 
         //TODO add element?
-        PwNode.byQuery('td.sortable-control').html(link_tag);
+        let query = 'td.' + _this.tablednd_control;
+        PwNode.byQuery(query).html(link_tag);
 
-        let elements = document.getElementsByClassName('pw_sortable_event');
+        let elements = document.getElementsByClassName('pw_table_dnd_event');
         if (elements) {
             [].forEach.call(elements, function(element) {
                 let event = element.getAttribute('event');
@@ -361,17 +365,25 @@ function PwSortable(options) {
             });
         }
     }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        let elements = document.getElementsByClassName('pw_sortable');
+    this.reloadEvents = function() {
+        addEvents();
+    }
+    function addEvents() {
+        let elements = document.getElementsByClassName('pw_table_dnd');
         if (elements) {
             [].forEach.call(elements, function(element) {
                 let event = element.getAttribute('event');
                 let action = element.getAttribute('action');
-                if (event && action) { element.addEventListener(event, _this[action], false); }
+                if (event && action) { 
+                    if (element.removeEventListener) element.removeEventListener(event, _this[action], false); 
+                    element.addEventListener(event, _this[action], false); 
+                }
             });
         }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        addEvents();
     });
     return this;
 }
-var pw_sortable = new PwSortable();
+var pw_table_dnd = new PwTableDND();
