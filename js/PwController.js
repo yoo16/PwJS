@@ -195,7 +195,6 @@ var PwController = function () {
                 }
             }
         }
-        pw_ui.showModal(pw_ui.error_window_name);
     }
 
     /**
@@ -386,23 +385,27 @@ var PwController = function () {
     this.loadImage = function(url, node, callback, error_callback, loading_node) {
         url+= '&serial=' + new Date().getTime();
         node.setAttr('src', url);
+        if (node.attr('loading_id')) loading_node = PwNode.id(node.attr('loading_id'));
         if (loading_node) pw_app.loadingDom(loading_node);
 
-        var selector = '';
         let loadHandler = function(event) {
-            if (loading_node) pw_app.hideLoading(loading_node);
-            node.show();
+            let loading_id;
+            if (loading_node) loading_id = loading_node.getID();
+            if (loading_id) pw_app.hideLoading(loading_id);
             if (callback) callback();
             node.element.removeEventListener('load', loadHandler);
+            node.show();
         }
         node.element.addEventListener('load', loadHandler, false);
 
         let errorHandler = function(event) {
-            pw_app.hideLoading(selector);
+            let loading_id;
+            if (loading_node) loading_id = loading_node.getID();
+            if (loading_id) pw_app.hideLoading(loading_id);
             node.attr('src', null);
-            node.hide();
             if (callback) error_callback();
             node.element.removeEventListener('error', errorHandler);
+            node.hide();
         }
         node.element.addEventListener('error', errorHandler, false);
     }

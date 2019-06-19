@@ -23,15 +23,11 @@ var PwUI = function() {
         return id;
     }
 
-    //remove jquery
     this.showModal = function(selector) {
-        selector = this.jqueryId(selector);
-        $(selector).modal('show');
+        pw_modal.show(selector);
     }
-    //remove jquery
     this.hideModal = function(selector) {
-        selector = this.jqueryId(selector);
-        $(selector).modal('hide');
+        pw_modal.hide(selector);
     }
 
     this.openWindow = function(url, params) {
@@ -50,7 +46,7 @@ var PwUI = function() {
         var delete_id = this.getAttribute('delete_id');
         if (!delete_id) return;
         PwNode.id('from_delete_id').setValue(delete_id);
-        pw_ui.showModal('delete-window');
+        pw_modal.show('delete-window');
     }
     this.reloadDeleteConfirm = function() {
         //IE dosen't work elements.forEach()

@@ -5,12 +5,6 @@
  */
 
 'use strict';
-var pw_form;
-
-document.addEventListener('DOMContentLoaded', function() {
-    pw_form = new PwForm();
-});
-
 var PwForm = function () {
     this.value = {}
 
@@ -220,4 +214,23 @@ var PwForm = function () {
         return checks;
     }
 
+    /** 
+     * clear
+     */
+    this.clearHandler = function(event) {
+        let target = this.getAttribute('data-target');
+        document.getElementById(target).value = '';
+    }
+    this.reloadEvents = function() {
+        //IE dosen't work elements.forEach()
+        let clear_elements = document.getElementsByClassName('pw-clear');
+        [].forEach.call(clear_elements, function(element) {
+            element.removeEventListener('click', pw_form.clearHandler);
+            element.addEventListener('click', pw_form.clearHandler, false);
+        });
+    }
 }
+var pw_form = new PwForm();
+document.addEventListener('DOMContentLoaded', function() {
+    pw_form.reloadEvents();
+});

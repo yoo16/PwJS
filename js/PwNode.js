@@ -232,6 +232,10 @@ var PwNode = /** @class */ (function () {
             if (this.element) setDisplay(this.element, '');
             if (this.elements) [].forEach.call(this.elements, function(element) { setDisplay(element, '') });
         }
+        this.showInline = function () {
+            if (this.element) setDisplay(this.element, 'inline');
+            if (this.elements) [].forEach.call(this.elements, function(element) { setDisplay(element, 'inline') });
+        }
         this.hide = function () {
             if (this.element) setDisplay(this.element, 'none');
             if (this.elements) [].forEach.call(this.elements, function(element) { setDisplay(element, 'none') });
@@ -240,15 +244,19 @@ var PwNode = /** @class */ (function () {
             element.style.display = value
         }
         this.disabled = function () {
-            if (this.element) setDisabled(this.element.disabled, true);
-            if (this.elements) [].forEach.call(this.elements, function(element) { setDisabled(element.disabled, true) });
+            if (this.element) setDisabled(this.element, true);
+            if (this.elements) [].forEach.call(this.elements, function(element) { setDisabled(element, true) });
         }
         this.abled = function () {
-            if (this.element) setDisabled(this.element.disabled, false);
-            if (this.elements) [].forEach.call(this.elements, function(element) { setDisabled(element.disabled, false) });
+            if (this.element) setDisabled(this.element, false);
+            if (this.elements) [].forEach.call(this.elements, function(element) { setDisabled(element, false) });
         }
         function setDisabled(element, value) {
-            element.style.display = value
+            if (value) {
+                element.setAttribute('disabled', value);
+            } else {
+                element.removeAttribute('disabled');
+            }
         }
         this.controller = function () {
             if (this.element) return this.attr('pw-controller');
