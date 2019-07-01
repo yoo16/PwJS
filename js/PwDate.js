@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 var PwDate = function() {
+    var _this = this;
     this.from_selector = 'from-at';
     this.to_selector = 'to-at';
 
@@ -42,24 +43,24 @@ var PwDate = function() {
 
         var date = new Date(value)
         date.setDate(date.getDate() + 1);
-        var value = this.string(date);
+        var value = _this.string(date);
         return value;
     }  
     this.prevDate = function(value) {
         var date = new Date(value)
         date.setDate(date.getDate() - 1);
-        var value = this.string(date);
+        var value = _this.string(date);
         return value;
     }
     this.replaceAllHyphen = function(value) {
-        if (!value) return;
         value = value.toString();
         value = value.replace(/-/g, "/");
         return value;
     }
     this.string = function(value) {
         if (!value) return;
-        value = this.replaceAllHyphen(value);
+        //TODO IE bug: string replace
+        //value = _this.replaceAllHyphen(value);
 
         var year = 0;
         var month = 0;

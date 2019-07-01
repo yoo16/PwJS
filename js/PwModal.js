@@ -37,7 +37,6 @@ var PwModal = function() {
 
         //var node = PwNode.id(selector);
         //node.hide();
-        console.log(PwNode.byClass(pw_modal.load_show_class_name));
         PwNode.byClass(pw_modal.load_show_class_name).hide();
     }
     this.showHandler = function(event) {

@@ -23,6 +23,16 @@ var PwForm = function () {
         }
         return values;
     }
+    this.submit = function(node) {
+        pw_app.showLoading();
+        let selector_id = node.attr('data-target');
+        if (selector_id) {
+            PwNode.id(selector_id).submit();
+        } else {
+            let form = node.element.closest('form');
+            if (form) form.submit();
+        }
+    }
     this.init = function(selector_id) {
         this.initInput(selector_id)
         this.initSelect(selector_id)
@@ -32,7 +42,7 @@ var PwForm = function () {
         var selector = selector_id + ' input';
         let elements = PwNode.byQuery(selector).elements;
         if (!elements) return;
-        [].forEach(elements, function(element) {
+        [].forEach.call(elements, function(element) {
             var node = PwNode.byElement(element);
             var type = node.attr('type');
             var name = node.attr('name');
@@ -55,7 +65,7 @@ var PwForm = function () {
         var selector = selector_id + ' select option';
         let elements = PwNode.byQuery(selector).elements;
         if (!elements) return;
-        [].forEach(elements, function(element) {
+        [].forEach.call(elements, function(element) {
             var node = PwNode.byElement(element);
             var name = node.parent().attr('name');
             var default_value = element.attr('default_value');
@@ -69,7 +79,7 @@ var PwForm = function () {
         var selector = selector_id + ' textarea';
         let elements = PwNode.byQuery(selector).elements;
         if (!elements) return;
-        [].forEach(elements, function(element) {
+        [].forEach.call(elements, function(element) {
             var node = PwNode.byElement(element);
             var name = node.attr('name');
             var default_value = node.attr('default_value');
@@ -89,7 +99,7 @@ var PwForm = function () {
         var selector = selector_id + ' input';
         let elements = PwNode.byQuery(selector).elements;
         if (!elements) return;
-        [].forEach(elements, function(element) {
+        [].forEach.call(elements, function(element) {
             var node = PwNode.byElement(element);
             var type = node.attr('type');
             var name = node.attr('name');
@@ -111,7 +121,7 @@ var PwForm = function () {
         var selector = selector_id + ' select option';
         let elements = PwNode.byQuery(selector).elements;
         if (!elements) return;
-        [].forEach(elements, function(element) {
+        [].forEach.call(elements, function(element) {
             var node = PwNode.byElement(element);
             var name = node.parent().attr('name');
             name = checkName(name);
@@ -122,7 +132,7 @@ var PwForm = function () {
         var selector = selector_id + ' textarea';
         let elements = PwNode.byQuery(selector).elements;
         if (!elements) return;
-        [].forEach(elements, function(element) {
+        [].forEach.call(elements, function(element) {
             var node = PwNode.byElement(element);
             var name = node.attr('name');
             name = checkName(name);
@@ -138,7 +148,7 @@ var PwForm = function () {
         var selector = selector_id + ' input';
         let elements = PwNode.byQuery(selector).elements;
         if (!elements) return;
-        [].forEach(elements, function(element) {
+        [].forEach.call(elements, function(element) {
             var node = PwNode.byElement(element);
             var type = node.attr('type');
             var name = node.attr('name');
@@ -158,7 +168,7 @@ var PwForm = function () {
         var selector = selector_id + ' select option';
         let elements = PwNode.byQuery(selector).elements;
         if (!elements) return;
-        [].forEach(elements, function(element) {
+        [].forEach.call(elements, function(element) {
             var node = PwNode.byElement(element);
             var name = node.parent().attr('name');
             if (name) pw_form.value[name] = node.value();
@@ -168,7 +178,7 @@ var PwForm = function () {
         var selector = selector_id + ' textarea';
         let elements = PwNode.byQuery(selector).elements;
         if (!elements) return;
-        [].forEach(elements, function(element) {
+        [].forEach.call(elements, function(element) {
             var node = PwNode.byElement(element);
             var name = node.attr('name');
             if (name) pw_form.value[name] = node.value();
@@ -204,7 +214,7 @@ var PwForm = function () {
         let elements = PwNode.byQuery(selector).elements;
         if (!elements) return;
         var checks = [];
-        [].forEach(elements, function(element) {
+        [].forEach.call(elements, function(element) {
             var node = PwNode.byElement(element);
             var checked = node.checked();
             if (checked) {

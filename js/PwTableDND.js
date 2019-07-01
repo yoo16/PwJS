@@ -84,6 +84,8 @@ function PwTableDND(options) {
         function handleDrop(event) {
             var tr = event.target.closest('tr');
             if (tr && _this.drag_item != tr) {
+                let row_id = tr.getAttribute(_this.row_id_column);
+                if (!row_id) return;
                 _this.target_item = tr;
             }
             event.target.style.opacity = '1.0'
@@ -92,12 +94,14 @@ function PwTableDND(options) {
                 var tbody = PwNode.byQuery(_this.body_selector).first();
                 let drag_order = _this.drag_item.getAttribute('order');
                 let target_order = _this.target_item.getAttribute('order');
-                if (drag_order > target_order) {
-                    tbody.insertBefore(_this.drag_item, _this.target_item);
-                } else if (drag_order < target_order) {
-                    tbody.insertBefore(_this.drag_item, _this.target_item.nextElementSibling);
+                if (drag_order && target_order) {
+                    if (drag_order > target_order) {
+                        tbody.insertBefore(_this.drag_item, _this.target_item);
+                    } else if (drag_order < target_order) {
+                        tbody.insertBefore(_this.drag_item, _this.target_item.nextElementSibling);
+                    }
+                    _this.reloadRowIds();
                 }
-                _this.reloadRowIds();
             }
             event.preventDefault();
             event.stopPropagation();
@@ -123,7 +127,9 @@ function PwTableDND(options) {
                 row_node.setAttr('id', pw_row_id_column + row_id);
                 row_node.setAttr('order', index + 1);
                 row_node.setAttr('draggable', true);
-                row_node.setAttr('ondragstart', "event.dataTransfer.setData('text/plain', null)");
+                if (!pw_app.isIE()) {
+                    row_node.setAttr('ondragstart', "event.dataTransfer.setData('text/plain', null)");
+                }
             }
         });
     }
@@ -186,7 +192,8 @@ function PwTableDND(options) {
         } else {
             //use PwApp
             pw_app.postJson( { controller: controller, action: action },
-                json, {callback: callback, is_show_loading: true}
+                json,
+                {callback: callback, is_show_loading: true}
             );
         }
         function callback(data) {
@@ -196,8 +203,9 @@ function PwTableDND(options) {
             if (_this.callback) _this.callback(data);
         }
     }
-    //not use PwApp
+    //Case: not use PwApp
     this.postJson = function (url, json, options) {
+        if (options.is_show_loading) pw_ui.showLoading();
         function headerPostJson (json) {
             var header = { 
                 method: 'POST',
@@ -275,14 +283,14 @@ function PwTableDND(options) {
     }
     this.bottom = function(event) {
         var tbody = PwNode.byQuery(_this.body_selector).first();
-        let last_tr = PwNode.byQuery(_this.sortable_tr_selector).last()
+        let last_tr = PwNode.byQuery(_this.sortable_tr_selector).last();
         let tr = this.closest('tr');
         tbody.insertBefore(tr, last_tr);
         _this.reloadRowIds();
     }
     this.addRowControl = function() {
         var header_tr_element = PwNode.byQuery(_this.tr_selector).first();
-        var sortable_control_header_element = document.createElement('th')
+        var sortable_control_header_element = document.createElement('th');
         sortable_control_header_element.classList.add(_this.tablednd_control);
         header_tr_element.insertBefore(sortable_control_header_element, header_tr_element.children[0]);
 

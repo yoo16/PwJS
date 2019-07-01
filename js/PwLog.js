@@ -20,11 +20,12 @@ var PwLog = function () {
     this.log_contents;
 
     this.loadList = function() {
-        var url = pw_log.base_url + this.name + '/' + this.action_list;
-
         PwNode.id(this.html_id).html('');
-        pw_app.postByUrl(url, this.url_params, callback);
-
+        pw_app.postHtml(
+            {controller: this.name, action: this.action_list},
+            this.url_params,
+            {callback: callback, is_show_loading: true}
+        );
         function callback(json) {
             if (!json) return;
             var values = JSON.parse(json);
@@ -32,32 +33,38 @@ var PwLog = function () {
         }
 
         function renderHtml(values) {
-            $(pw_log.html_id).append('<dl>');
-
-            //TODO dom function
+            var dl = document.createElement('dl');
+            //TODO remove jquery
             for (var key in values) {
                 var log = values[key];
-                var attribute = '';
-                attribute+= ' href="#"';
-                attribute+= ' class="pw-lib"';
-                attribute+= ' pw-lib="PwLog"';
-                attribute+= ' pw-action="detail"';
-                attribute+= ' filename="' + log.filename + '"';
-                var dd = '<dd><a' + attribute + '>' + log.basename + '</dd>';
-                $(pw_log.html_id).append(dd);
+
+                var a = document.createElement('a');
+                a.classList.add('pw-click');
+                a.setAttribute('pw-lib', 'PwLog');
+                a.setAttribute('pw-action', 'detail');
+                a.setAttribute('filename', log.filename);
+                a.innerText = log.basename;
+
+                var dd = document.createElement('dd');
+                dd.appendChild(a);
+                dl.appendChild(dd);
             }
 
-            $(pw_log.html_id).append('</dl>');
+            let log_list = document.getElementById('log_list');
+            log_list.appendChild(dl);
         }
     }
     this.detail = function(node) {
-        var url = pw_log.base_url + 'pw_admin/log_file';
         this.filename = node.attr('filename');
         pw_log.filename = this.filename;
         this.url_params.filename = this.filename;
 
-        pw_app.postByUrl(url, this.url_params, showLog);
-        function showLog(data) {
+        pw_app.postHtml(
+            { controller: 'pw_admin', action: 'log_file'},
+            this.url_params,
+            { callback: callback , is_show_loading: true}
+        );
+        function callback(data) {
             var values = nl2br(data);
             pw_log.log_title.html(pw_log.filename);
             pw_log.log_contents.html(values);
@@ -66,12 +73,13 @@ var PwLog = function () {
     }
     this.reload = function(node) {
         if (!pw_log.filename) return;
-        var url = pw_log.base_url + 'pw_admin/log_file';
         this.url_params.filename = pw_log.filename;
-        pw_app.postByUrl(url, this.url_params, callback);
-        pw_app.showLoading();
+        pw_app.postHtml(
+            { controller: 'pw_admin', action: 'log_file'},
+            this.url_params,
+            { callback: callback , is_show_loading: true}
+        );
         function callback(data) {
-            pw_app.hideLoading();
             var values = nl2br(data);
             pw_log.log_contents.html(values);
         }
@@ -80,11 +88,12 @@ var PwLog = function () {
         if (window.confirm('delete log?')) {
             var url = pw_log.base_url + 'pw_admin/delete_log';
             this.url_params.filename = pw_log.filename;
-
-            pw_app.postByUrl(url, this.url_params, callback);
-            pw_app.showLoading();
+            pw_app.postHtml(
+                { controller: 'pw_admin', action: 'delete_log'},
+                this.url_params,
+                { callback: callback , is_show_loading: true}
+            )
             function callback(data) {
-                pw_app.hideLoading();
                 pw_log.log_title.html('');
                 pw_log.log_contents.html('');
                 pw_ui.hideModal('log-window');
